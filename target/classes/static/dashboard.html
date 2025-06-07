@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Панель пользователя</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #fafafa;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+        }
+        td {
+            padding: 6px 8px;
+        }
+        td:first-child {
+            font-weight: bold;
+            width: 150px;
+            color: #555;
+        }
+        img {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 8px;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/" class="back">&larr; Назад</a>
+    <h2>Ваши квесты</h2>
+    <div class="section">
+        <ul id="quests"></ul>
+    </div>
+    <h2>Ваши продукты</h2>
+    <div class="section">
+        <ul id="products"></ul>
+    </div>
+</div>
+<script>
+    function getParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    const userId = getParam('userId');
+    if (!userId) {
+        window.location.href = '/';
+    }
+    fetch('/api/dashboard?userId=' + encodeURIComponent(userId))
+        .then(r => r.json())
+        .then(data => {
+            const quests = data.quests || [];
+            const products = data.products || [];
+            const questsList = document.getElementById('quests');
+            const productsList = document.getElementById('products');
+
+            questsList.innerHTML = quests.length ? quests.map(q => `
+                <li>
+                    <table>${Object.entries(q).map(([k, v]) => `
+                        <tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+                    </table>
+                </li>
+            `).join('') : '<li>Нет квестов</li>';
+
+            productsList.innerHTML = products.length ? products.map(p => `
+                <li>
+                    <table>${Object.entries(p).map(([k, v]) => {
+                if (k === 'photo' && v) {
+                    return `<tr><td>${k}</td><td><img src="${v}" alt="Фото"></td></tr>`;
+                }
+                return `<tr><td>${k}</td><td>${v}</td></tr>`;
+            }).join('')}</table>
+                </li>
+            `).join('') : '<li>Нет продуктов</li>';
+        })
+        .catch(() => {
+            document.getElementById('quests').innerHTML = '<li>Ошибка загрузки</li>';
+            document.getElementById('products').innerHTML = '<li>Ошибка загрузки</li>';
+        });
+</script>
+</body>
+</html>
